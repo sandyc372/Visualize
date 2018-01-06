@@ -1,0 +1,14 @@
+@import '~antd/dist/antd.css';
+
+ .logo {
+    margin: 16px;
+    font-size: 18px;
+    color: white;
+    text-align: center
+  }
+  .logo img{
+    width: 100%;
+  }
+  .ant-divider-horizontal{
+    margin: 15px 0;
+  }
