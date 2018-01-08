@@ -2,7 +2,7 @@
   "name": "calendar",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://sandyc372.github.io/",
+  "homepage": "http://sandyc372.github.io/Visualize",
   "dependencies": {
     "antd": "^3.0.3",
     "cheerio": "^1.0.0-rc.2",
