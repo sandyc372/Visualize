@@ -25,7 +25,7 @@ class DatasetCard extends React.Component {
         return (
             <div className='dataset-card' style={styles.datasetCard}>
                 <Card
-                    title={'Dataset ' + this.props.number}
+                    title={this.props.fetching ? 'Loading...' : ('Dataset ' + this.props.number)}
                     loading={this.props.fetching}
                     hoverable
                     bordered={true}

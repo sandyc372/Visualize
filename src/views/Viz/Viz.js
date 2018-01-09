@@ -1,7 +1,8 @@
 import React from "react";
 import styles from './styles';
-import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select } from 'antd';
+import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select, Popover } from 'antd';
 import VizModal from '../../components/VizModal';
+import VizTypes from '../../components/VizTypes';
 import cheerio from 'cheerio';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts';
 import COMMONS from '../../commons';
@@ -26,13 +27,13 @@ class Viz extends React.Component {
             filters: '',
             fields: '',
             sort: '',
+            fetching: true,
             processedData: {
                 barChart: null,
             }
         }
     }
     componentDidMount() {
-        console.log
         this.fetchData();
     }
 
@@ -53,6 +54,10 @@ class Viz extends React.Component {
     }
 
     fetchData = function () {
+        this.setState({
+            fetching: true
+        })
+
         fetch(this.props.data.url)
             .then((response) => response.text())
             .then((result) => {
@@ -63,14 +68,15 @@ class Viz extends React.Component {
                         let href = $(collection[i]).attr('href');
                         if (href.startsWith('https://api.data.gov.in')) {
                             href = href.replace('YOURKEY', COMMONS.key);
-                            console.log(href);
+
                             fetch(this.getApiUrl(href))
                                 .then((response) => response.json())
                                 .then((result) => {
                                     this.setState({
                                         data: result,
                                         apiUrl: href,
-                                        processedData: this.processData(result)
+                                        processedData: this.processData(result),
+                                        fetching: false
                                     })
                                 })
                             break;
@@ -97,8 +103,7 @@ class Viz extends React.Component {
                     labels: [],
                     magnitudes: []
                 },
-                fieldList: [],
-                filterFunction: (data) => data
+                fieldList: []
             };
             data.fields.forEach(function (field) {
                 let arr = data.records.map(function (record) {
@@ -140,10 +145,10 @@ class Viz extends React.Component {
             }
             barChart.options = {
                 layout: 'horizontal',
-                startRow: 0 + 1,
-                endRow: barChart.data.length,
                 filters: []
             }
+            barChart.filterFunction = (data) => data;
+            barChart.slicingFunction = (data) => data.slice(0);
             console.log(barChart);
             let newProcessedData = { ...this.state.processedData, barChart: barChart };
             return newProcessedData;
@@ -230,6 +235,23 @@ class Viz extends React.Component {
                 }
             })
 
+        }
+    }
+
+    handleRowSliderOnChange = function(value){
+        console.log(value)
+        if(value.length == 2){
+            this.setState({
+                ...this.state,
+                processedData: {
+                    ...this.state.processedData,
+                    barChart: {
+                        ...this.state.processedData.barChart,
+                        slicingFunction: (data) => data.slice(value[0]-1, value[1])
+                    }
+
+                }
+            })
         }
     }
 
@@ -433,24 +455,30 @@ class Viz extends React.Component {
                     <Row>
                         <Col span={24}>
                             <div className='viz-card' style={styles.vizCard}>
-                                <VizModal
-                                    visible={this.state.vizModalVisible}
-                                    onModalOk={() => this.handleModalOk()}
-                                    onModalCancel={() => this.handleModalCancel()}
-                                    onBarChartXaxisChange={(value) => this.handleBarChartXxisChange(value)}
-                                    onBarChartFieldDeselect={(value) => this.handleBarChartFieldDeselect(value)}
-                                    onBarChartFieldSelect={(value) => this.handleBarChartFieldSelect(value)}
-                                    onFilterChange={(obj) => this.handleFilterChange(obj)}
-                                    onBarChartFilterslistChange={(obj) => { this.handleBarChartFilterslistChange(obj) }}
-                                    onBarChartLayoutChange={(layout) => this.handleBarChartLayoutChange(layout)}
-                                    data={this.state.data}
-                                    processedData={this.state.processedData}
-                                    applyFilters={(obj) => { this.applyFilters(obj) }}
-                                    removeFilters={(obj) => { this.removeFilters(obj) }}
-                                />
+                                {
+                                    this.state.processedData.barChart ?
+                                        <VizModal
+                                            visible={this.state.vizModalVisible}
+                                            onModalOk={() => this.handleModalOk()}
+                                            onModalCancel={() => this.handleModalCancel()}
+                                            onBarChartXaxisChange={(value) => this.handleBarChartXxisChange(value)}
+                                            onBarChartFieldDeselect={(value) => this.handleBarChartFieldDeselect(value)}
+                                            onBarChartFieldSelect={(value) => this.handleBarChartFieldSelect(value)}
+                                            onFilterChange={(obj) => this.handleFilterChange(obj)}
+                                            onBarChartFilterslistChange={(obj) => { this.handleBarChartFilterslistChange(obj) }}
+                                            onBarChartLayoutChange={(layout) => this.handleBarChartLayoutChange(layout)}
+                                            data={this.state.data}
+                                            processedData={this.state.processedData}
+                                            applyFilters={(obj) => { this.applyFilters(obj) }}
+                                            removeFilters={(obj) => { this.removeFilters(obj) }}
+                                            onRowSliderOnChange={(value) => this.handleRowSliderOnChange(value)}
+                                        /> : null
+
+                                }
+
                                 <Card
                                     title={this.props.data.title}
-                                    loading={this.props.fetching}
+                                    loading={this.state.fetching}
                                     hoverable
                                     bordered={true}
                                     actions={[<Button shape="circle" icon="setting" onClick={() => {
@@ -458,15 +486,25 @@ class Viz extends React.Component {
                                             vizModalVisible: true
                                         })
                                     }} />,
-                                    <Icon type="filter" />, <Icon type="ellipsis" />]}
+                                    
+                                    <Popover content={<VizTypes />} trigger="click">
+                                        <Button shape="circle" icon="ellipsis" />
+                                    </Popover>,
+                                    <Icon type="filter" />
+                                    ]}
                                 >
 
                                     {
                                         this.state.processedData.barChart ?
-                                            <ResponsiveContainer width='100%' height={450}>
+                                            <ResponsiveContainer width='100%' height={480}>
                                                 <BarChart
                                                     layout={this.state.processedData.barChart.options.layout}
-                                                    data={this.state.processedData.barChart.filterFunction(this.state.processedData.barChart.data)}>
+                                                    data={
+                                                        this.state.processedData.barChart.slicingFunction(
+                                                        this.state.processedData.barChart.filterFunction(
+                                                            this.state.processedData.barChart.data
+                                                        ))
+                                                    }>
                                                     <CartesianGrid strokeDasharray="3 3" />
 
                                                     <XAxis

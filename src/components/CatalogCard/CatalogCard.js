@@ -20,7 +20,7 @@ class CatalogCard extends React.Component {
             <div className='catalog-card' style={styles.catalogCard}>
                 <Row>
                     <Col span={24} >
-                        <Card title={this.props.data.Title}
+                        <Card title={this.props.fetching ? 'Loading...' : this.props.data.Title}
                             loading={this.props.fetching}
                             hoverable
                             bordered={true}

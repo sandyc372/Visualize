@@ -1,6 +1,6 @@
 import React from "react";
-import { Layout, Menu, Breadcrumb, Icon } from 'antd';
-import { BrowserRouter, Route, Redirect } from 'react-router-dom';
+import { Layout, Menu, Icon } from 'antd';
+import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 import Catalog from './views/Catalog';
 import Dataset from './views/Dataset';
 import Viz from './views/Viz';
@@ -72,8 +72,8 @@ class App extends React.Component {
     * Returns: nothing
     */
     handleVizViewSwitch = function (url, history, page, title) {
-        let newDataset = {...this.state.dataset, page: page};
-        let newViz = {...this.state.viz, url: url, title: title}
+        let newDataset = { ...this.state.dataset, page: page };
+        let newViz = { ...this.state.viz, url: url, title: title }
         this.setState({
             dataset: newDataset,
             viz: newViz
@@ -123,43 +123,47 @@ class App extends React.Component {
 
                         </Menu>
                     </Sider>
-                    <Route path='/'
-                        exact
-                        render={(routeProps) => (
-                            <Catalog {...routeProps}
-                                page={this.state.catalog.page}
-                                data={this.state.catalog.data}
-                                metadata={this.state.catalog.metadata}
-                                onPageChange={(page, pageSize) => { this.handleCatalogUrlPagination(page, pageSize) }}
-                                onDatasetViewSwitch={(url, history) => { this.handleDatasetViewSwitch(url, history) }}
-                                fetching={this.state.catalog.fetching}
-                                onInit={() => { this.fetchCatalogs(this.state.catalog.page) }}
-                            />
-                        )}
-                    />
+                    <Switch>
+                        <Route path='/catalog'
+                            exact
+                            render={(routeProps) => (
+                                <Catalog {...routeProps}
+                                    page={this.state.catalog.page}
+                                    data={this.state.catalog.data}
+                                    metadata={this.state.catalog.metadata}
+                                    onPageChange={(page, pageSize) => { this.handleCatalogUrlPagination(page, pageSize) }}
+                                    onDatasetViewSwitch={(url, history) => { this.handleDatasetViewSwitch(url, history) }}
+                                    fetching={this.state.catalog.fetching}
+                                    onInit={() => { this.fetchCatalogs(this.state.catalog.page) }}
+                                />
+                            )}
+                        />
 
-                    <Route path='/dataset'
-                        exact
-                        render={(routeProps) => (
-                            this.state.dataset.url ?
-                            <Dataset {...routeProps}
-                                data={this.state.dataset}
-                                onVizViewSwitch={ (url, history, page, title) => { this.handleVizViewSwitch(url, history, page, title) }}
-                            /> : 
-                            <Redirect to="/"/>
-                        )}
-                    />
+                        <Route path='/dataset'
+                            exact
+                            render={(routeProps) => (
+                                this.state.dataset.url ?
+                                    <Dataset {...routeProps}
+                                        data={this.state.dataset}
+                                        onVizViewSwitch={(url, history, page, title) => { this.handleVizViewSwitch(url, history, page, title) }}
+                                    /> :
+                                    <Redirect to="/catalog" />
+                            )}
+                        />
 
-                    <Route path='/viz'
-                        exact
-                        render={(routeProps) => (
-                            this.state.viz.url ?
-                            <Viz {...routeProps}
-                                data={this.state.viz}
-                            /> :
-                            <Redirect to="/"/>
-                        )}
-                    />
+                        <Route path='/viz'
+                            exact
+                            render={(routeProps) => (
+                                this.state.viz.url ?
+                                    <Viz {...routeProps}
+                                        data={this.state.viz}
+                                    /> :
+                                    <Redirect to="/catalog" />
+                            )}
+                        />
+
+                        <Redirect to="/catalog" />
+                    </Switch>
                 </Layout>
             </BrowserRouter>
         );

@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select, InputNumber } from 'antd';
+import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select, InputNumber, Slider } from 'antd';
 import FilterGrid from '../components/FilterGrid';
 const Option = Select.Option;
 
@@ -18,38 +18,12 @@ const VizModal = (props) => {
             width={1200}
         >
             <div style={{ margin: '0.4rem 0rem' }}>
-                <Row>
-                    <Col span={2}>
-                        Layout
-                    </Col>
-                    <Col span={22}>
-                        <Select
-                            defaultValue={props.processedData.barChart ? props.processedData.barChart.options.layout : null}
-                            style={{ width: '20%' }}
-                            onChange={(value) => {
-                                props.onBarChartLayoutChange(value.toLowerCase());
-                            }}
-                        >
-                            {
-                                ['Horizontal', 'Vertical'].map((field, index) => {
-                                    return (
-                                        <Option
-
-                                            value={field}
-                                            key={index}>{field}</Option>
-                                    )
-                                })
-                            }
-                        </Select>
-                    </Col>
-                </Row>
-            </div>
-            <div style={{ margin: '0.4rem 0rem' }}>
-                <Row>
+           
+                <Row gutter={24}>
                     <Col span={2}>
                         Category
                     </Col>
-                    <Col span={22}>
+                    <Col span={8}>
                         <Select
                             defaultValue={props.processedData.barChart ? props.processedData.barChart.dataKey.xAxis : null}
                             style={{ width: '100%' }}
@@ -68,6 +42,44 @@ const VizModal = (props) => {
                                 }) : null
                             }
                         </Select>
+                    </Col>
+                    <Col span={2}>
+                        Layout
+                    </Col>
+                    <Col span={5}>
+                        <Select
+                            defaultValue={props.processedData.barChart ? props.processedData.barChart.options.layout : null}
+                            style={{ width: '100%' }}
+                            onChange={(value) => {
+                                props.onBarChartLayoutChange(value.toLowerCase());
+                            }}
+                        >
+                            {
+                                ['Horizontal', 'Vertical'].map((field, index) => {
+                                    return (
+                                        <Option
+
+                                            value={field}
+                                            key={index}>{field}</Option>
+                                    )
+                                })
+                            }
+                        </Select>
+                    </Col>
+                    <Col span={2}>
+                        Range
+                    </Col>
+                    <Col span={5}>
+                    <Slider range 
+                    defaultValue={[1, props.processedData.barChart.filterFunction(props.processedData.barChart.data).length]} 
+                    min={
+                        1
+                    }
+                    max={
+                        props.processedData.barChart.filterFunction(props.processedData.barChart.data).length
+                    }
+                    onChange={(value) => props.onRowSliderOnChange(value)}
+                    />
                     </Col>
                 </Row>
             </div>
