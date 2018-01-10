@@ -3,11 +3,13 @@ import styles from './styles';
 import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select, Popover } from 'antd';
 import VizModal from '../../components/VizModal';
 import VizTypes from '../../components/VizTypes';
+import Map from '../../components/Map';
 import cheerio from 'cheerio';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts';
 import COMMONS from '../../commons';
 import checkProperties from '../../utilities/checkProperties';
 import parser from '../../utilities/parser';
+import indiaStatesData from '../../utilities/indiaStatesData';
 const { Header, Content, Footer, Sider } = Layout;
 const SubMenu = Menu.SubMenu;
 const { Meta } = Card;
@@ -28,6 +30,7 @@ class Viz extends React.Component {
             fields: '',
             sort: '',
             fetching: true,
+            selectedViz: 'map',
             processedData: {
                 barChart: null,
             }
@@ -150,11 +153,20 @@ class Viz extends React.Component {
             barChart.filterFunction = (data) => data;
             barChart.slicingFunction = (data) => data.slice(0);
             console.log(barChart);
+            barChart.error = this.checkDataErrors({ barChart })
             let newProcessedData = { ...this.state.processedData, barChart: barChart };
             return newProcessedData;
         }
     }
 
+    checkDataErrors = function ({ barChart, pieChart }) {
+        if (barChart) {
+            return !(barChart.metaData.labels.length > 0 &&
+                barChart.metaData.magnitudes.length > 0 &&
+                barChart.dataKey.xAxis && typeof barChart.dataKey.xAxis == 'string' &&
+                barChart.dataKey.bars.every((bar) => typeof bar == 'string' ? true : false))
+        }
+    }
     applyFilters = function ({ on }) {
         if (on == 'barChart') {
             var filterStr = "";
@@ -238,16 +250,16 @@ class Viz extends React.Component {
         }
     }
 
-    handleRowSliderOnChange = function(value){
+    handleRowSliderOnChange = function (value) {
         console.log(value)
-        if(value.length == 2){
+        if (value.length == 2) {
             this.setState({
                 ...this.state,
                 processedData: {
                     ...this.state.processedData,
                     barChart: {
                         ...this.state.processedData.barChart,
-                        slicingFunction: (data) => data.slice(value[0]-1, value[1])
+                        slicingFunction: (data) => data.slice(value[0] - 1, value[1])
                     }
 
                 }
@@ -456,7 +468,8 @@ class Viz extends React.Component {
                         <Col span={24}>
                             <div className='viz-card' style={styles.vizCard}>
                                 {
-                                    this.state.processedData.barChart ?
+                                    this.state.processedData.barChart
+                                        && this.state.processedData.barChart.error == false ?
                                         <VizModal
                                             visible={this.state.vizModalVisible}
                                             onModalOk={() => this.handleModalOk()}
@@ -486,7 +499,7 @@ class Viz extends React.Component {
                                             vizModalVisible: true
                                         })
                                     }} />,
-                                    
+
                                     <Popover content={<VizTypes />} trigger="click">
                                         <Button shape="circle" icon="ellipsis" />
                                     </Popover>,
@@ -495,51 +508,65 @@ class Viz extends React.Component {
                                 >
 
                                     {
-                                        this.state.processedData.barChart ?
-                                            <ResponsiveContainer width='100%' height={480}>
-                                                <BarChart
-                                                    layout={this.state.processedData.barChart.options.layout}
-                                                    data={
-                                                        this.state.processedData.barChart.slicingFunction(
-                                                        this.state.processedData.barChart.filterFunction(
-                                                            this.state.processedData.barChart.data
-                                                        ))
-                                                    }>
-                                                    <CartesianGrid strokeDasharray="3 3" />
+                                        this.state.selectedViz == 'barChart' ?
+                                            this.state.processedData.barChart ?
+                                                this.state.processedData.barChart.error == false ?
+                                                    <ResponsiveContainer width='100%' height={480}>
+                                                        <BarChart
+                                                            layout={this.state.processedData.barChart.options.layout}
+                                                            data={
+                                                                this.state.processedData.barChart.slicingFunction(
+                                                                    this.state.processedData.barChart.filterFunction(
+                                                                        this.state.processedData.barChart.data
+                                                                    ))
+                                                            }>
+                                                            <CartesianGrid strokeDasharray="3 3" />
 
-                                                    <XAxis
-                                                        dataKey={
-                                                            this.state.processedData.barChart.options.layout == 'horizontal' ?
-                                                                this.state.processedData.barChart.dataKey.xAxis : null
-                                                        }
-                                                        type={
-                                                            this.state.processedData.barChart.options.layout == 'horizontal' ?
-                                                                'category' : 'number'
-                                                        }
+                                                            <XAxis
+                                                                dataKey={
+                                                                    this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                                                        this.state.processedData.barChart.dataKey.xAxis : null
+                                                                }
+                                                                type={
+                                                                    this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                                                        'category' : 'number'
+                                                                }
+                                                            />
+
+                                                            <YAxis
+                                                                dataKey={
+                                                                    this.state.processedData.barChart.options.layout == 'vertical' ?
+                                                                        this.state.processedData.barChart.dataKey.xAxis : null
+                                                                }
+                                                                type={
+                                                                    this.state.processedData.barChart.options.layout == 'vertical' ?
+                                                                        'category' : 'number'
+                                                                }
+                                                            />
+                                                            <Tooltip />
+                                                            <Legend />
+                                                            {
+                                                                this.state.processedData.barChart.dataKey.bars.map((bar, index) => {
+                                                                    return (
+                                                                        <Bar dataKey={bar} key={bar} fill={COLORS[index]} ></Bar>
+                                                                    )
+                                                                })
+                                                            }
+
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                    : <Card title="Error!">
+                                                        This type of data is unsuitable for {this.state.selectedViz} viz.
+                                                        Please Select another view.
+                                                    </Card>
+                                                : null
+                                            : this.state.selectedViz == 'map' ?
+                                                <ResponsiveContainer width='100%' height={480}>
+                                                    <Map
+                                                        geoData={indiaStatesData}
                                                     />
-
-                                                    <YAxis
-                                                        dataKey={
-                                                            this.state.processedData.barChart.options.layout == 'vertical' ?
-                                                                this.state.processedData.barChart.dataKey.xAxis : null
-                                                        }
-                                                        type={
-                                                            this.state.processedData.barChart.options.layout == 'vertical' ?
-                                                                'category' : 'number'
-                                                        }
-                                                    />
-                                                    <Tooltip />
-                                                    <Legend />
-                                                    {
-                                                        this.state.processedData.barChart.dataKey.bars.map((bar, index) => {
-                                                            return (
-                                                                <Bar dataKey={bar} key={bar} fill={COLORS[index]} ></Bar>
-                                                            )
-                                                        })
-                                                    }
-
-                                                </BarChart>
-                                            </ResponsiveContainer> : null
+                                                </ResponsiveContainer>
+                                                : null
                                     }
 
                                 </Card>
