@@ -2,6 +2,7 @@ import React from "react";
 import styles from './styles';
 import { Layout, Menu, Modal, Icon, Card, Col, Row, Button, Select, Popover } from 'antd';
 import VizModal from '../../components/VizModal';
+import MapModal from '../../components/MapModal';
 import VizTypes from '../../components/VizTypes';
 import Map from '../../components/Map';
 import cheerio from 'cheerio';
@@ -22,6 +23,7 @@ class Viz extends React.Component {
         this.state = {
             vizModalVisible: false,
             apiModalVisible: false,
+            mapModalVisible: false,
             data: null,
             apiUrl: null,
             limit: 10,
@@ -33,6 +35,7 @@ class Viz extends React.Component {
             selectedViz: 'map',
             processedData: {
                 barChart: null,
+                map: null
             }
         }
     }
@@ -322,15 +325,36 @@ class Viz extends React.Component {
     }
 
     handleModalOk = function () {
-        this.setState({
-            vizModalVisible: false
-        })
+        switch (this.state.selectedViz) {
+            case 'barChart':
+                this.setState({
+                    vizModalVisible: false
+                })
+                break;
+            case 'map':
+                this.setState({
+                    mapModalVisible: false
+                })
+                break;
+
+        }
+
     }
 
     handleModalCancel = function () {
-        this.setState({
-            vizModalVisible: false
-        })
+        switch (this.state.selectedViz) {
+            case 'barChart':
+                this.setState({
+                    vizModalVisible: false
+                })
+                break;
+            case 'map':
+                this.setState({
+                    mapModalVisible: false
+                })
+                break;
+
+        }
     }
     handleBarChartFieldDeselect = function (value) {
         console.log('deselected')
@@ -460,6 +484,161 @@ class Viz extends React.Component {
             }
         })
     }
+
+    handleMapFieldChange = function ({ stateField, dataField }) {
+        console.log(stateField, dataField)
+        if (stateField && dataField) {
+            this.setState({
+                ...this.state,
+                processedData: {
+                    ...this.state.processedData,
+                    map: {
+                        ...this.state.processedData.map,
+                        stateField: stateField,
+                        dataField: dataField
+                    }
+
+                }
+            })
+
+        }
+        else if (stateField) {
+            this.setState({
+                ...this.state,
+                processedData: {
+                    ...this.state.processedData,
+                    map: {
+                        ...this.state.processedData.map,
+                        stateField: stateField
+                    }
+
+                }
+            })
+
+        }
+        else if (dataField) {
+            this.setState({
+                ...this.state,
+                processedData: {
+                    ...this.state.processedData,
+                    map: {
+                        ...this.state.processedData.map,
+                        dataField: dataField
+                    }
+
+                }
+            })
+
+        }
+    }
+    //renders the corrext modal as per selected chart
+    renderModals = function () {
+
+        return (
+            this.state.selectedViz == 'barChart' ?
+                this.state.processedData.barChart
+                    && this.state.processedData.barChart.error == false ?
+                    <VizModal
+                        visible={this.state.vizModalVisible}
+                        onModalOk={() => this.handleModalOk()}
+                        onModalCancel={() => this.handleModalCancel()}
+                        onBarChartXaxisChange={(value) => this.handleBarChartXxisChange(value)}
+                        onBarChartFieldDeselect={(value) => this.handleBarChartFieldDeselect(value)}
+                        onBarChartFieldSelect={(value) => this.handleBarChartFieldSelect(value)}
+                        onFilterChange={(obj) => this.handleFilterChange(obj)}
+                        onBarChartFilterslistChange={(obj) => { this.handleBarChartFilterslistChange(obj) }}
+                        onBarChartLayoutChange={(layout) => this.handleBarChartLayoutChange(layout)}
+                        data={this.state.data}
+                        processedData={this.state.processedData}
+                        applyFilters={(obj) => { this.applyFilters(obj) }}
+                        removeFilters={(obj) => { this.removeFilters(obj) }}
+                        onRowSliderOnChange={(value) => this.handleRowSliderOnChange(value)}
+                    /> : null
+                :
+                this.state.selectedViz == 'map' ?
+                    <MapModal
+                        visible={this.state.mapModalVisible}
+                        onModalOk={() => this.handleModalOk()}
+                        onModalCancel={() => this.handleModalCancel()}
+                        data={this.state.data}
+                        onMapFieldChange={(obj) => this.handleMapFieldChange(obj)}
+                    />
+                    : null
+        )
+
+
+    }
+
+    //renders the correct chart as per selected chart
+    renderCharts = function () {
+        return (
+
+            this.state.selectedViz == 'barChart' ?
+                this.state.processedData.barChart ?
+                    this.state.processedData.barChart.error == false ?
+                        <ResponsiveContainer width='100%' height={480}>
+                            <BarChart
+                                layout={this.state.processedData.barChart.options.layout}
+                                data={
+                                    this.state.processedData.barChart.slicingFunction(
+                                        this.state.processedData.barChart.filterFunction(
+                                            this.state.processedData.barChart.data
+                                        ))
+                                }>
+                                <CartesianGrid strokeDasharray="3 3" />
+
+                                <XAxis
+                                    dataKey={
+                                        this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                            this.state.processedData.barChart.dataKey.xAxis : null
+                                    }
+                                    type={
+                                        this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                            'category' : 'number'
+                                    }
+                                />
+
+                                <YAxis
+                                    dataKey={
+                                        this.state.processedData.barChart.options.layout == 'vertical' ?
+                                            this.state.processedData.barChart.dataKey.xAxis : null
+                                    }
+                                    type={
+                                        this.state.processedData.barChart.options.layout == 'vertical' ?
+                                            'category' : 'number'
+                                    }
+                                />
+                                <Tooltip />
+                                <Legend />
+                                {
+                                    this.state.processedData.barChart.dataKey.bars.map((bar, index) => {
+                                        return (
+                                            <Bar dataKey={bar} key={bar} fill={COLORS[index]} ></Bar>
+                                        )
+                                    })
+                                }
+
+                            </BarChart>
+                        </ResponsiveContainer>
+                        : <Card title="Error!">
+                            This type of data is unsuitable for {this.state.selectedViz} viz.
+                        Please Select another view.
+                    </Card>
+                    : null
+                :
+                this.state.selectedViz == 'map'  && this.state.data ?
+                    <ResponsiveContainer width='100%' height={480}>
+                        <Map
+                            geoData={indiaStatesData}
+                            fields={this.state.processedData.map}
+                            data={this.state.data.records}
+                        />
+                    </ResponsiveContainer>
+                    : null
+        )
+
+    }
+
     render() {
         return (
             <Layout>
@@ -468,24 +647,7 @@ class Viz extends React.Component {
                         <Col span={24}>
                             <div className='viz-card' style={styles.vizCard}>
                                 {
-                                    this.state.processedData.barChart
-                                        && this.state.processedData.barChart.error == false ?
-                                        <VizModal
-                                            visible={this.state.vizModalVisible}
-                                            onModalOk={() => this.handleModalOk()}
-                                            onModalCancel={() => this.handleModalCancel()}
-                                            onBarChartXaxisChange={(value) => this.handleBarChartXxisChange(value)}
-                                            onBarChartFieldDeselect={(value) => this.handleBarChartFieldDeselect(value)}
-                                            onBarChartFieldSelect={(value) => this.handleBarChartFieldSelect(value)}
-                                            onFilterChange={(obj) => this.handleFilterChange(obj)}
-                                            onBarChartFilterslistChange={(obj) => { this.handleBarChartFilterslistChange(obj) }}
-                                            onBarChartLayoutChange={(layout) => this.handleBarChartLayoutChange(layout)}
-                                            data={this.state.data}
-                                            processedData={this.state.processedData}
-                                            applyFilters={(obj) => { this.applyFilters(obj) }}
-                                            removeFilters={(obj) => { this.removeFilters(obj) }}
-                                            onRowSliderOnChange={(value) => this.handleRowSliderOnChange(value)}
-                                        /> : null
+                                    this.renderModals()
 
                                 }
 
@@ -495,9 +657,23 @@ class Viz extends React.Component {
                                     hoverable
                                     bordered={true}
                                     actions={[<Button shape="circle" icon="setting" onClick={() => {
-                                        this.setState({
-                                            vizModalVisible: true
-                                        })
+                                        switch (this.state.selectedViz) {
+                                            case 'barChart':
+                                                if (this.state.processedData.barChart &&
+                                                    this.state.processedData.barChart.error == false)
+                                                    this.setState({
+                                                        vizModalVisible: true
+                                                    })
+                                                break;
+
+                                            case 'map':
+                                                this.setState({
+                                                    mapModalVisible: true
+                                                })
+                                                break;
+
+                                        }
+
                                     }} />,
 
                                     <Popover content={<VizTypes />} trigger="click">
@@ -508,65 +684,7 @@ class Viz extends React.Component {
                                 >
 
                                     {
-                                        this.state.selectedViz == 'barChart' ?
-                                            this.state.processedData.barChart ?
-                                                this.state.processedData.barChart.error == false ?
-                                                    <ResponsiveContainer width='100%' height={480}>
-                                                        <BarChart
-                                                            layout={this.state.processedData.barChart.options.layout}
-                                                            data={
-                                                                this.state.processedData.barChart.slicingFunction(
-                                                                    this.state.processedData.barChart.filterFunction(
-                                                                        this.state.processedData.barChart.data
-                                                                    ))
-                                                            }>
-                                                            <CartesianGrid strokeDasharray="3 3" />
-
-                                                            <XAxis
-                                                                dataKey={
-                                                                    this.state.processedData.barChart.options.layout == 'horizontal' ?
-                                                                        this.state.processedData.barChart.dataKey.xAxis : null
-                                                                }
-                                                                type={
-                                                                    this.state.processedData.barChart.options.layout == 'horizontal' ?
-                                                                        'category' : 'number'
-                                                                }
-                                                            />
-
-                                                            <YAxis
-                                                                dataKey={
-                                                                    this.state.processedData.barChart.options.layout == 'vertical' ?
-                                                                        this.state.processedData.barChart.dataKey.xAxis : null
-                                                                }
-                                                                type={
-                                                                    this.state.processedData.barChart.options.layout == 'vertical' ?
-                                                                        'category' : 'number'
-                                                                }
-                                                            />
-                                                            <Tooltip />
-                                                            <Legend />
-                                                            {
-                                                                this.state.processedData.barChart.dataKey.bars.map((bar, index) => {
-                                                                    return (
-                                                                        <Bar dataKey={bar} key={bar} fill={COLORS[index]} ></Bar>
-                                                                    )
-                                                                })
-                                                            }
-
-                                                        </BarChart>
-                                                    </ResponsiveContainer>
-                                                    : <Card title="Error!">
-                                                        This type of data is unsuitable for {this.state.selectedViz} viz.
-                                                        Please Select another view.
-                                                    </Card>
-                                                : null
-                                            : this.state.selectedViz == 'map' ?
-                                                <ResponsiveContainer width='100%' height={480}>
-                                                    <Map
-                                                        geoData={indiaStatesData}
-                                                    />
-                                                </ResponsiveContainer>
-                                                : null
+                                        this.renderCharts()
                                     }
 
                                 </Card>
