@@ -2,7 +2,8 @@ import React from "react";
 import { ResponsiveContainer, Surface } from 'recharts';
 import { geoMercator, geoPath } from "d3-geo"
 import { feature, mesh } from 'topojson';
-import { scaleLinear } from 'd3-scale';
+import { scaleLinear, scaleQuantize } from 'd3-scale';
+const COLORS = ['#f9ddc7', '#fcc79e', '#fdb176', '#f19e51', '#e78a37', '#e0762e', '#d05c27', '#b93f22', '#9d2e12', '#7f2100']
 
 class Map extends React.Component {
 
@@ -55,7 +56,7 @@ class Map extends React.Component {
         let processedData = [];
         let scale = scaleLinear();
 
-        if (fields && data) {
+        if (fields && fields.stateField && fields.dataField && data) {
             console.log(fields.dataField, fields.stateField)
             data.forEach((datum) => {
                 let found = processedData.find((pdata) => pdata.state == datum[fields.stateField])
@@ -72,8 +73,9 @@ class Map extends React.Component {
         if (processedData.length > 0) {
             let max = processedData.reduce((prev, curr) => (prev.value > curr.value) ? prev : curr)
             let min = processedData.reduce((prev, curr) => (prev.value < curr.value) ? prev : curr)
-            scale = scaleLinear().domain([min, max]);
+            scale = scaleQuantize().domain([min.value, max.value]).range(COLORS);
         }
+        window.scale = scale; console.log(scale)
         return { processedData, scale };
     }
 
@@ -110,15 +112,15 @@ class Map extends React.Component {
                         this.state.path ?
                             this.state.data.map((d, i) => {
 
-                                let fill;
-                                let opacity = 0.1;
+                                let fill = `#d7f1f7`;
+                                
                                 if (this.state.processedData) {
                                     let found = this.state.processedData.find((datum) => datum.state.toLowerCase().trim() == d.properties.st_nm.toLowerCase().trim())
                                     console.log(found)
                                     if (found)
-                                        opacity = this.state.scale(found.value)
+                                        fill = this.state.scale(found.value)
                                 }
-                                fill = `rgba(0, 0, 56, ${opacity})`
+                                
                                 console.log('fill', fill);
                                 return <path
                                     key={`path-${i}`}

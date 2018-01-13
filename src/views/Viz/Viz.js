@@ -531,7 +531,7 @@ class Viz extends React.Component {
 
         }
     }
-    //renders the corrext modal as per selected chart
+    //renders the correct modal as per selected chart
     renderModals = function () {
 
         return (
