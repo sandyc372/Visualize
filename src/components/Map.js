@@ -112,7 +112,7 @@ class Map extends React.Component {
                         this.state.path ?
                             this.state.data.map((d, i) => {
 
-                                let fill = `#d7f1f7`;
+                                let fill = `#ffffff`;
                                 
                                 if (this.state.processedData) {
                                     let found = this.state.processedData.find((datum) => datum.state.toLowerCase().trim() == d.properties.st_nm.toLowerCase().trim())
@@ -127,7 +127,7 @@ class Map extends React.Component {
                                     d={this.state.path(d)}
                                     className="country"
                                     fill={fill}
-                                    stroke="#FFFFFF"
+                                    stroke="#3a403d"
                                     strokeWidth={0.5}
                                 />
                             }) : null

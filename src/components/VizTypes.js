@@ -2,39 +2,21 @@ import React from 'react';
 import { Card, Col, Row, Icon } from 'antd';
 
 const VizTypes = (props) => {
+
+
     return (
         <Row gutter={16}>
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="bar-chart" />
-                </Card>
-            </Col>
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="area-chart" />
-                </Card>
-            </Col>
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="pie-chart" />
-                </Card>
-            </Col>
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="dot-chart" />
-                </Card>
-            </Col>
-           
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="line-chart" />
-                </Card>
-            </Col>
-            <Col span={4}>
-                <Card bordered={false}>
-                    <Icon style={{ fontSize: 40, color: '#08c' }} type="table" />
-                </Card>
-            </Col>
+            {
+                ['barChart', 'areaChart', 'pieChart', 'dotChart', 'lineChart', 'table', 'map'].map((type, index) => (
+                    <Col span={3} key={index}>
+                        <Card bordered={false}>
+                            <Icon onClick={() => props.selectVizType(type)}
+                                style={{ fontSize: 40, color: props.selectedViz == type ? '#08c' : 'grey' }}
+                                type={type == 'map' ?  'global' : type.replace(/([a-z])([A-Z])/, (match, p1, p2) => p1 + '-' + p2.toLowerCase())} />
+                        </Card>
+                    </Col>
+                ))
+            }            
         </Row>
     )
 }

@@ -32,7 +32,7 @@ class Viz extends React.Component {
             fields: '',
             sort: '',
             fetching: true,
-            selectedViz: 'map',
+            selectedViz: 'barChart',
             processedData: {
                 barChart: null,
                 map: null
@@ -487,49 +487,26 @@ class Viz extends React.Component {
 
     handleMapFieldChange = function ({ stateField, dataField }) {
         console.log(stateField, dataField)
-        if (stateField && dataField) {
+        if (stateField || dataField)
             this.setState({
                 ...this.state,
                 processedData: {
                     ...this.state.processedData,
                     map: {
                         ...this.state.processedData.map,
-                        stateField: stateField,
-                        dataField: dataField
+                        stateField: stateField ? stateField : this.state.processedData.map ? this.state.processedData.map.stateField : null,
+                        dataField: dataField ? dataField : this.state.processedData.map ? this.state.processedData.map.dataField : null
                     }
 
                 }
             })
+    }
 
-        }
-        else if (stateField) {
-            this.setState({
-                ...this.state,
-                processedData: {
-                    ...this.state.processedData,
-                    map: {
-                        ...this.state.processedData.map,
-                        stateField: stateField
-                    }
-
-                }
-            })
-
-        }
-        else if (dataField) {
-            this.setState({
-                ...this.state,
-                processedData: {
-                    ...this.state.processedData,
-                    map: {
-                        ...this.state.processedData.map,
-                        dataField: dataField
-                    }
-
-                }
-            })
-
-        }
+    selectVizType = function(type){
+        if(type)
+        this.setState({
+            selectedViz: type
+        })
     }
     //renders the correct modal as per selected chart
     renderModals = function () {
@@ -561,6 +538,7 @@ class Viz extends React.Component {
                         onModalOk={() => this.handleModalOk()}
                         onModalCancel={() => this.handleModalCancel()}
                         data={this.state.data}
+                        processedData={this.state.processedData}
                         onMapFieldChange={(obj) => this.handleMapFieldChange(obj)}
                     />
                     : null
@@ -626,7 +604,7 @@ class Viz extends React.Component {
                     </Card>
                     : null
                 :
-                this.state.selectedViz == 'map'  && this.state.data ?
+                this.state.selectedViz == 'map' && this.state.data ?
                     <ResponsiveContainer width='100%' height={480}>
                         <Map
                             geoData={indiaStatesData}
@@ -676,7 +654,7 @@ class Viz extends React.Component {
 
                                     }} />,
 
-                                    <Popover content={<VizTypes />} trigger="click">
+                                    <Popover content={<VizTypes selectedViz={this.state.selectedViz} selectVizType={(type) => this.selectVizType(type)} />} trigger="click">
                                         <Button shape="circle" icon="ellipsis" />
                                     </Popover>,
                                     <Icon type="filter" />

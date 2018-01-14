@@ -26,6 +26,7 @@ const MapModal = (props) => {
                             size='small'
                             style={{ width: '100%' }}
                             placeholder='Select state field'
+                            defaultValue={props.processedData.map ? props.processedData.map.stateField : null}
                             onChange={(stateField) => { props.onMapFieldChange({stateField}) }}
                         >
                             {
@@ -48,6 +49,7 @@ const MapModal = (props) => {
                             size='small'
                             style={{ width: '100%' }}
                             placeholder='Select data field'
+                            defaultValue={props.processedData.map ? props.processedData.map.dataField : null}
                             onChange={(dataField) => { props.onMapFieldChange({dataField}) }}
                         >
                             {
