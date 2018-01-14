@@ -6,7 +6,7 @@ import MapModal from '../../components/MapModal';
 import VizTypes from '../../components/VizTypes';
 import Map from '../../components/Map';
 import cheerio from 'cheerio';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer, LineChart, Line, ReferenceLine, AreaChart, Area, Dot } from 'recharts';
 import COMMONS from '../../commons';
 import checkProperties from '../../utilities/checkProperties';
 import parser from '../../utilities/parser';
@@ -326,6 +326,8 @@ class Viz extends React.Component {
 
     handleModalOk = function () {
         switch (this.state.selectedViz) {
+            case 'lineChart':
+            case 'areaChart':
             case 'barChart':
                 this.setState({
                     vizModalVisible: false
@@ -343,6 +345,8 @@ class Viz extends React.Component {
 
     handleModalCancel = function () {
         switch (this.state.selectedViz) {
+            case 'lineChart':
+            case 'areaChart':
             case 'barChart':
                 this.setState({
                     vizModalVisible: false
@@ -502,17 +506,17 @@ class Viz extends React.Component {
             })
     }
 
-    selectVizType = function(type){
-        if(type)
-        this.setState({
-            selectedViz: type
-        })
+    selectVizType = function (type) {
+        if (type)
+            this.setState({
+                selectedViz: type
+            })
     }
     //renders the correct modal as per selected chart
     renderModals = function () {
 
         return (
-            this.state.selectedViz == 'barChart' ?
+            (this.state.selectedViz == 'barChart' || this.state.selectedViz == 'lineChart' || this.state.selectedViz == 'areaChart') ?
                 this.state.processedData.barChart
                     && this.state.processedData.barChart.error == false ?
                     <VizModal
@@ -612,7 +616,65 @@ class Viz extends React.Component {
                             data={this.state.data.records}
                         />
                     </ResponsiveContainer>
-                    : null
+                    :
+                    this.state.selectedViz == 'lineChart' ?
+                        this.state.processedData.barChart ?
+                            this.state.processedData.barChart.error == false ?
+                                <ResponsiveContainer width='100%' height={480}>
+                                    <LineChart
+                                        layout={this.state.processedData.barChart.options.layout}
+                                        data={
+                                            this.state.processedData.barChart.slicingFunction(
+                                                this.state.processedData.barChart.filterFunction(
+                                                    this.state.processedData.barChart.data
+                                                ))
+                                        }>
+                                        <CartesianGrid strokeDasharray="3 3" />
+
+                                        <XAxis
+                                            dataKey={
+                                                this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                                    this.state.processedData.barChart.dataKey.xAxis : null
+                                            }
+                                            type={
+                                                this.state.processedData.barChart.options.layout == 'horizontal' ?
+                                                    'category' : 'number'
+                                            }
+                                        />
+
+                                        <YAxis
+                                            dataKey={
+                                                this.state.processedData.barChart.options.layout == 'vertical' ?
+                                                    this.state.processedData.barChart.dataKey.xAxis : null
+                                            }
+                                            type={
+                                                this.state.processedData.barChart.options.layout == 'vertical' ?
+                                                    'category' : 'number'
+                                            }
+                                        />
+                                        <ReferenceLine
+                                            stroke='lightgrey'
+                                            strokeWidth='2px'
+                                            y={this.state.processedData.barChart.options.layout == 'horizontal' ? 0 : null}
+                                            x={this.state.processedData.barChart.options.layout == 'vertical' ? 0 : null} />
+                                        <Tooltip />
+                                        <Legend />
+                                        {
+                                            this.state.processedData.barChart.dataKey.bars.map((bar, index) => {
+                                                return (
+                                                    <Line dataKey={bar} type='monotone' key={bar} stroke={COLORS[index]} ></Line>
+                                                )
+                                            })
+                                        }
+
+                                    </LineChart>
+                                </ResponsiveContainer>
+                                : <Card title="Error!">
+                                    This type of data is unsuitable for {this.state.selectedViz} viz.
+                                    Please Select another view.
+                                </Card>
+                            : null
+                        : null
         )
 
     }
@@ -636,6 +698,8 @@ class Viz extends React.Component {
                                     bordered={true}
                                     actions={[<Button shape="circle" icon="setting" onClick={() => {
                                         switch (this.state.selectedViz) {
+                                            case 'lineChart':
+                                            case 'areaChart':
                                             case 'barChart':
                                                 if (this.state.processedData.barChart &&
                                                     this.state.processedData.barChart.error == false)
